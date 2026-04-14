@@ -39,6 +39,7 @@ class ImageJob:
 def main() -> None:
     ingest_url = require_env("CF_INGEST_URL")
     ingest_token = require_env("CF_INGEST_TOKEN")
+    public_base_url = get_public_base_url()
     repository = require_env("GITHUB_REPOSITORY")
     sha = require_env("GITHUB_SHA")
     event_path = require_env("GITHUB_EVENT_PATH")
@@ -50,7 +51,7 @@ def main() -> None:
         print("No supported image files changed under assets/.")
         return
 
-    jobs = [build_job(path) for path in sorted(image_paths)]
+    jobs = [build_job(path, public_base_url) for path in sorted(image_paths)]
     payload = {
         "repository": repository,
         "commit_sha": sha,
@@ -71,6 +72,12 @@ def require_env(name: str) -> str:
     if not value:
         raise RuntimeError(f"Missing required environment variable: {name}")
     return value
+
+
+def get_public_base_url() -> str:
+    # Keep the old default for backward compatibility, but prefer setting this
+    # explicitly per environment (for example assets.nkhirt.com).
+    return os.getenv("PUBLIC_BASE_URL", "https://nkhirt.com").rstrip("/")
 
 
 def get_changed_files(event_path: str) -> list[str]:
@@ -94,7 +101,7 @@ def is_supported_asset(path: Path) -> bool:
     return path.parts and path.parts[0] == ASSETS_DIR.name and path.suffix.lower() in VALID_SUFFIXES
 
 
-def build_job(path: Path) -> ImageJob:
+def build_job(path: Path, public_base_url: str) -> ImageJob:
     if not path.exists():
         raise FileNotFoundError(f"Changed file no longer exists in checkout: {path}")
 
@@ -102,7 +109,7 @@ def build_job(path: Path) -> ImageJob:
     sha256 = file_sha256(path)
     publish_path = get_publishable_path(path)
     asset_relpath = publish_path.as_posix()
-    public_url = f"https://nkhirt.com/{asset_relpath}"
+    public_url = f"{public_base_url}/{asset_relpath}"
 
     return ImageJob(
         path=asset_relpath,

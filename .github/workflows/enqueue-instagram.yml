@@ -33,4 +33,5 @@ jobs:
         env:
           CF_INGEST_URL: ${{ secrets.CF_INGEST_URL }}
           CF_INGEST_TOKEN: ${{ secrets.CF_INGEST_TOKEN }}
+          PUBLIC_BASE_URL: ${{ vars.PUBLIC_BASE_URL }}
         run: python scripts/enqueue_posts.py

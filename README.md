@@ -12,11 +12,14 @@ Pipeline:
 6. The Worker enqueues the publish job into Cloudflare Queues.
 7. The Queue consumer publishes one post at a time using Meta's `/{ig-user-id}/media` then `/{ig-user-id}/media_publish` flow.
 
-The image URL sent to Meta is assumed to be publicly accessible at:
+The image URL sent to Meta is built from `PUBLIC_BASE_URL` and assumed to be
+publicly accessible at:
 
-`https://nkhirt.com/assets/<relative-path-under-assets>`
+`<PUBLIC_BASE_URL>/assets/<relative-path-under-assets>`
 
-That means your Cloudflare Pages deployment for `nkhirt.com` should serve the same repo contents or otherwise expose those image paths publicly.
+That means your Cloudflare Pages deployment for your asset host (for example
+`https://assets.nkhirt.com`) should serve the same repo contents or otherwise
+expose those image paths publicly.
 
 ## Why this shape
 
@@ -55,6 +58,10 @@ Add these repository secrets:
 
 - `CF_INGEST_URL` — for example `https://nkhirt.com/api/instagram/enqueue`
 - `CF_INGEST_TOKEN` — shared secret checked by the Worker
+
+Add this repository variable:
+
+- `PUBLIC_BASE_URL` — public host serving image files (for example `https://assets.nkhirt.com`)
 
 ## Cloudflare secrets / vars
 
@@ -118,7 +125,7 @@ It is built for reliability and rate control, not for trying to disguise automat
 
 - If a file has no EXIF timestamp, the script falls back to filename parsing and then file modification time.
 - Captions are generated from capture time in `HH:MM | DD Month YYYY` (24-hour) format.
-- If your images are not actually reachable on `https://nkhirt.com/assets/...`, Meta will not be able to fetch them.
+- If your images are not reachable on `<PUBLIC_BASE_URL>/assets/...`, Meta will not be able to fetch them.
 - HEIC/HEIF files are accepted for timestamp extraction, but publishing uses a same-stem companion `.jpg`/`.jpeg`/`.png`/`.webp` URL under `assets/`.
 - The exact Meta publishing cap should be verified against the current docs and your app setup; the Worker checks `content_publishing_limit` before publishing.
 
