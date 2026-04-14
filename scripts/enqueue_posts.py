@@ -46,12 +46,17 @@ def main() -> None:
 
     changed_files = get_changed_files(event_path)
     image_paths = [Path(p) for p in changed_files if is_supported_asset(Path(p))]
+    existing_image_paths = [path for path in image_paths if path.exists()]
+    missing_image_paths = [path for path in image_paths if not path.exists()]
 
-    if not image_paths:
+    for path in missing_image_paths:
+        print(f"Skipping removed asset path from git diff: {path}")
+
+    if not existing_image_paths:
         print("No supported image files changed under assets/.")
         return
 
-    jobs = [build_job(path, public_base_url) for path in sorted(image_paths)]
+    jobs = [build_job(path, public_base_url) for path in sorted(existing_image_paths)]
     payload = {
         "repository": repository,
         "commit_sha": sha,

@@ -126,6 +126,7 @@ It is built for reliability and rate control, not for trying to disguise automat
 - If a file has no EXIF timestamp, the script falls back to filename parsing and then file modification time.
 - Captions are generated from capture time in `HH:MM | DD Month YYYY` (24-hour) format.
 - If your images are not reachable on `<PUBLIC_BASE_URL>/assets/...`, Meta will not be able to fetch them.
+- Deleted files in the git diff are skipped during enqueue (only files present in the current checkout are enqueued).
 - HEIC/HEIF files are accepted for timestamp extraction, but publishing uses a same-stem companion `.jpg`/`.jpeg`/`.png`/`.webp` URL under `assets/`.
 - The exact Meta publishing cap should be verified against the current docs and your app setup; the Worker checks `content_publishing_limit` before publishing.
 
