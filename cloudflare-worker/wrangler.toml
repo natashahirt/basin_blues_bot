@@ -3,7 +3,7 @@ main = "src/index.js"
 compatibility_date = "2026-04-14"
 
 [vars]
-PUBLIC_BASE_URL = "https://nkhirt.com"
+PUBLIC_BASE_URL = "https://basinbluesassets.nkhirt.com"
 MIN_GAP_MINUTES = "60"
 MAX_JITTER_MINUTES = "20"
 QUIET_HOURS_START = "23"
@@ -13,16 +13,16 @@ IG_USER_ID = "17841468808374031"
 
 [[kv_namespaces]]
 binding = "STATE"
-id = "586b010bdc774d1984e7dfb3dc2782cc"
+id = "985472dee32e44be80c1af597d4f5ad6"
 
 [[queues.producers]]
-queue = "instagram-posts"
+queue = "instagram-posts-v2"
 binding = "POST_QUEUE"
 
 [[queues.consumers]]
-queue = "instagram-posts"
+queue = "instagram-posts-v2"
 max_batch_size = 1
 max_batch_timeout = 5
 max_retries = 5
-dead_letter_queue = "instagram-posts-dlq"
+dead_letter_queue = "instagram-posts-dlq-v2"
 max_concurrency = 1
