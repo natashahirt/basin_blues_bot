@@ -1,0 +1,28 @@
+name = "instagram-autoposter"
+main = "src/index.js"
+compatibility_date = "2026-04-14"
+
+[vars]
+PUBLIC_BASE_URL = "https://nkhirt.com"
+MIN_GAP_MINUTES = "60"
+MAX_JITTER_MINUTES = "20"
+QUIET_HOURS_START = "23"
+QUIET_HOURS_END = "7"
+POST_TIMEZONE = "America/New_York"
+IG_USER_ID = "17841468808374031"
+
+[[kv_namespaces]]
+binding = "STATE"
+id = "586b010bdc774d1984e7dfb3dc2782cc"
+
+[[queues.producers]]
+queue = "instagram-posts"
+binding = "POST_QUEUE"
+
+[[queues.consumers]]
+queue = "instagram-posts"
+max_batch_size = 1
+max_batch_timeout = 5
+max_retries = 5
+dead_letter_queue = "instagram-posts-dlq"
+max_concurrency = 1
