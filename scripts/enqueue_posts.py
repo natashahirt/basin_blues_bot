@@ -110,8 +110,13 @@ def build_job(path: Path) -> ImageJob:
         public_url=public_url,
         sha256=sha256,
         capture_iso=capture_dt.isoformat(),
-        caption=capture_dt.strftime("%Y-%m-%d %H:%M:%S"),
+        caption=format_caption(capture_dt),
     )
+
+
+def format_caption(capture_dt: datetime) -> str:
+    """Format caption as HH:MM | DD Month YYYY in 24-hour time."""
+    return capture_dt.strftime("%H:%M | %d %B %Y")
 
 
 def get_publishable_path(path: Path) -> Path:

@@ -117,6 +117,7 @@ It is built for reliability and rate control, not for trying to disguise automat
 ## Caveats
 
 - If a file has no EXIF timestamp, the script falls back to filename parsing and then file modification time.
+- Captions are generated from capture time in `HH:MM | DD Month YYYY` (24-hour) format.
 - If your images are not actually reachable on `https://nkhirt.com/assets/...`, Meta will not be able to fetch them.
 - HEIC/HEIF files are accepted for timestamp extraction, but publishing uses a same-stem companion `.jpg`/`.jpeg`/`.png`/`.webp` URL under `assets/`.
 - The exact Meta publishing cap should be verified against the current docs and your app setup; the Worker checks `content_publishing_limit` before publishing.
@@ -135,12 +136,29 @@ Useful flags:
 - `--dry-run` to preview changes
 - `--force` to overwrite existing `.jpg` companions
 
+## Local watcher
+
+To watch `assets/` and auto-commit/push when images change:
+
+```bash
+source .venv/bin/activate
+python scripts/watch_assets_and_push.py
+```
+
+Notes:
+
+- The watcher only stages/commits changes under `assets/`.
+- It automatically runs `scripts/generate_heic_companions.py` before each commit batch.
+- Use `--dry-run` to test without committing or pushing.
+- Use `--once` to process one detected batch and exit.
+
 ## Local structure
 
 ```text
 .github/workflows/enqueue-instagram.yml
 scripts/enqueue_posts.py
 scripts/generate_heic_companions.py
+scripts/watch_assets_and_push.py
 cloudflare-worker/wrangler.toml
 cloudflare-worker/src/index.js
 ```
