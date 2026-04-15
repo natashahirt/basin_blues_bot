@@ -129,6 +129,7 @@ It is built for reliability and rate control, not for trying to disguise automat
 - Captions are generated from capture time in `HH:MM | DD Month YYYY` (24-hour) format.
 - If your images are not reachable on `<PUBLIC_BASE_URL>/assets/...`, Meta will not be able to fetch them.
 - Deleted files in the git diff are skipped during enqueue (only files present in the current checkout are enqueued).
+- Enqueue order is oldest capture time first, so the most recent image is scheduled last.
 - HEIC/HEIF files are accepted for timestamp extraction, but publishing uses a same-stem companion `.jpg`/`.jpeg`/`.png`/`.webp` URL under `assets/`.
 - Ensure `IG_USER_ID` matches the token source (`graph.instagram.com/me` if using Instagram Graph tokens).
 - The exact Meta publishing cap should be verified against the current docs and your app setup; the Worker checks `content_publishing_limit` before publishing.

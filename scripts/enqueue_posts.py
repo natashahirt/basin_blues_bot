@@ -56,7 +56,9 @@ def main() -> None:
         print("No supported image files changed under assets/.")
         return
 
-    jobs = [build_job(path, public_base_url) for path in sorted(existing_image_paths)]
+    jobs = [build_job(path, public_base_url) for path in existing_image_paths]
+    # Oldest capture time first so the most recent image is posted last.
+    jobs.sort(key=lambda job: (job.capture_iso, job.path))
     payload = {
         "repository": repository,
         "commit_sha": sha,
