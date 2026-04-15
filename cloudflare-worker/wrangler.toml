@@ -6,10 +6,12 @@ compatibility_date = "2026-04-14"
 PUBLIC_BASE_URL = "https://basinbluesassets.nkhirt.com"
 MIN_GAP_MINUTES = "60"
 MAX_JITTER_MINUTES = "20"
+FIRST_POST_LEAD_MINUTES = "1"
 QUIET_HOURS_START = "23"
 QUIET_HOURS_END = "7"
 POST_TIMEZONE = "America/New_York"
-IG_USER_ID = "17841468808374031"
+IG_USER_ID = "26878491605121209"
+IG_GRAPH_API_BASE_URL = "https://graph.instagram.com"
 
 [[kv_namespaces]]
 binding = "STATE"

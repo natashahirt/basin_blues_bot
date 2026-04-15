@@ -1,9 +1,11 @@
 const MAX_QUEUE_DELAY_SECONDS = 86400;
 const DEFAULT_MIN_GAP_MINUTES = 60;
 const DEFAULT_MAX_JITTER_MINUTES = 20;
+const DEFAULT_FIRST_POST_LEAD_MINUTES = 1;
 const DEFAULT_QUIET_START = 23;
 const DEFAULT_QUIET_END = 7;
 const DEFAULT_TIMEZONE = "America/New_York";
+const DEFAULT_IG_GRAPH_API_BASE_URL = "https://graph.instagram.com";
 const STATE_NEXT_PUBLISH_AT = "scheduler:next_publish_at";
 
 export default {
@@ -51,6 +53,7 @@ async function handleEnqueue(request, env) {
   const now = Date.now();
   const minGapMs = getInt(env.MIN_GAP_MINUTES, DEFAULT_MIN_GAP_MINUTES) * 60_000;
   const maxJitterMs = getInt(env.MAX_JITTER_MINUTES, DEFAULT_MAX_JITTER_MINUTES) * 60_000;
+  const firstPostLeadMs = getInt(env.FIRST_POST_LEAD_MINUTES, DEFAULT_FIRST_POST_LEAD_MINUTES) * 60_000;
   const timezone = env.POST_TIMEZONE || DEFAULT_TIMEZONE;
   const quietStart = getInt(env.QUIET_HOURS_START, DEFAULT_QUIET_START);
   const quietEnd = getInt(env.QUIET_HOURS_END, DEFAULT_QUIET_END);
@@ -72,7 +75,7 @@ async function handleEnqueue(request, env) {
       continue;
     }
 
-    const baseLeadMs = scheduled.length === 0 ? 10 * 60_000 : 0;
+    const baseLeadMs = scheduled.length === 0 ? firstPostLeadMs : 0;
     const proposed = cursor + baseLeadMs + (scheduled.length === 0 ? 0 : minGapMs) + randomInt(0, maxJitterMs);
     const publishAt = alignToPostingWindow(proposed, timezone, quietStart, quietEnd);
 
@@ -206,7 +209,7 @@ function randomInt(min, max) {
 }
 
 async function getPublishingLimit(env) {
-  const url = new URL(`https://graph.facebook.com/v25.0/${env.IG_USER_ID}/content_publishing_limit`);
+  const url = new URL(`${getIgApiBaseUrl(env)}/${env.IG_USER_ID}/content_publishing_limit`);
   url.searchParams.set("fields", "quota_usage,config");
   url.searchParams.set("access_token", env.IG_ACCESS_TOKEN);
 
@@ -231,7 +234,7 @@ async function createMediaContainer(imageUrl, caption, env) {
     access_token: env.IG_ACCESS_TOKEN,
   });
 
-  const response = await fetch(`https://graph.facebook.com/v25.0/${env.IG_USER_ID}/media`, {
+  const response = await fetch(`${getIgApiBaseUrl(env)}/${env.IG_USER_ID}/media`, {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
@@ -253,7 +256,7 @@ async function publishContainer(containerId, env) {
     access_token: env.IG_ACCESS_TOKEN,
   });
 
-  const response = await fetch(`https://graph.facebook.com/v25.0/${env.IG_USER_ID}/media_publish`, {
+  const response = await fetch(`${getIgApiBaseUrl(env)}/${env.IG_USER_ID}/media_publish`, {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
@@ -267,6 +270,10 @@ async function publishContainer(containerId, env) {
   }
 
   return payload.id;
+}
+
+function getIgApiBaseUrl(env) {
+  return (env.IG_GRAPH_API_BASE_URL || DEFAULT_IG_GRAPH_API_BASE_URL).replace(/\/+$/, "");
 }
 
 function json(data, status = 200) {
