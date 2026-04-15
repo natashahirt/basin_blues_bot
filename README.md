@@ -43,6 +43,87 @@ Relevant Meta docs:
 - Content Publishing
 - IG User `content_publishing_limit`
 
+## Where to Change Config
+
+This section is the operational map for changing settings later.
+
+### Meta (Instagram API)
+
+Go to [Meta for Developers](https://developers.facebook.com/) and open your app.
+
+Use this area to:
+
+- manage app roles/testers
+- generate/refresh the Instagram access token used by the Worker
+- verify account linkage and API permissions
+
+Values tied to this:
+
+- `IG_ACCESS_TOKEN` (Worker secret)
+- `IG_USER_ID` (Worker var; should match token source)
+
+### Cloudflare Worker + Queues + KV
+
+Go to Cloudflare dashboard:
+
+- **Workers & Pages** -> `instagram-autoposter`
+- **Queues** -> `instagram-posts-v2` and `instagram-posts-dlq-v2`
+- **KV** -> namespace used by `STATE`
+
+Use these areas to:
+
+- deploy code updates
+- edit Worker vars/secrets
+- check logs and queue backlogs
+- rotate credentials
+
+Primary config file in repo:
+
+- `cloudflare-worker/wrangler.toml`
+
+### Cloudflare Pages (asset hosting)
+
+Go to Cloudflare dashboard:
+
+- **Workers & Pages** -> your Pages project serving this repo
+- **Custom domains** -> `basinbluesassets.nkhirt.com`
+
+Use this area to:
+
+- manage where image files are publicly served from
+- verify domain/DNS status
+
+Quick health check target:
+
+- `https://basinbluesassets.nkhirt.com/assets/<file>`
+
+### GitHub repo settings
+
+Go to GitHub repo:
+
+- **Settings -> Secrets and variables -> Actions**
+
+Use this area to manage:
+
+- secrets:
+  - `CF_INGEST_URL`
+  - `CF_INGEST_TOKEN`
+- variables:
+  - `PUBLIC_BASE_URL`
+
+### Local repo scripts
+
+Use these files for behavior changes:
+
+- enqueue logic + caption format + batching:
+  - `scripts/enqueue_posts.py`
+- HEIC companion generation:
+  - `scripts/generate_heic_companions.py`
+- local auto-commit/push watcher:
+  - `scripts/watch_assets_and_push.py`
+- Worker runtime publish/scheduling logic:
+  - `cloudflare-worker/src/index.js`
+
 ## Cloudflare
 
 You need:
