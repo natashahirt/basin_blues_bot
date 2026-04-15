@@ -5,6 +5,7 @@ import json
 import os
 import re
 import subprocess
+import time
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -20,6 +21,9 @@ ASSETS_DIR = Path("assets")
 VALID_SUFFIXES = {".jpg", ".jpeg", ".png", ".webp", ".heic", ".heif"}
 PUBLISHABLE_SUFFIXES = {".jpg", ".jpeg", ".png", ".webp"}
 HEIF_SUFFIXES = {".heic", ".heif"}
+DEFAULT_ENQUEUE_BATCH_SIZE = 25
+DEFAULT_ENQUEUE_TIMEOUT_SECONDS = 180
+DEFAULT_ENQUEUE_RETRIES = 3
 FILENAME_DT_PATTERNS = [
     re.compile(r"(?P<y>20\d{2})(?P<m>\d{2})(?P<d>\d{2})[_-]?(?P<h>\d{2})(?P<mi>\d{2})(?P<s>\d{2})"),
     re.compile(r"IMG[_-](?P<y>20\d{2})(?P<m>\d{2})(?P<d>\d{2})[_-](?P<h>\d{2})(?P<mi>\d{2})(?P<s>\d{2})"),
@@ -59,19 +63,32 @@ def main() -> None:
     jobs = [build_job(path, public_base_url) for path in existing_image_paths]
     # Oldest capture time first so the most recent image is posted last.
     jobs.sort(key=lambda job: (job.capture_iso, job.path))
-    payload = {
-        "repository": repository,
-        "commit_sha": sha,
-        "jobs": [job.__dict__ for job in jobs],
-    }
-
+    enqueue_batch_size = get_int_env("ENQUEUE_BATCH_SIZE", DEFAULT_ENQUEUE_BATCH_SIZE)
+    enqueue_timeout_seconds = get_int_env("ENQUEUE_TIMEOUT_SECONDS", DEFAULT_ENQUEUE_TIMEOUT_SECONDS)
+    enqueue_retries = get_int_env("ENQUEUE_RETRIES", DEFAULT_ENQUEUE_RETRIES)
     headers = {
         "Authorization": f"Bearer {ingest_token}",
         "Content-Type": "application/json",
     }
-    response = requests.post(ingest_url, headers=headers, data=json.dumps(payload), timeout=60)
-    response.raise_for_status()
-    print(response.text)
+
+    total_batches = (len(jobs) + enqueue_batch_size - 1) // enqueue_batch_size
+    print(f"Enqueuing {len(jobs)} jobs in {total_batches} batch(es).")
+
+    for batch_index, start in enumerate(range(0, len(jobs), enqueue_batch_size), start=1):
+        batch_jobs = jobs[start : start + enqueue_batch_size]
+        payload = {
+            "repository": repository,
+            "commit_sha": sha,
+            "jobs": [job.__dict__ for job in batch_jobs],
+        }
+        response = post_with_retries(
+            ingest_url=ingest_url,
+            headers=headers,
+            payload=payload,
+            timeout_seconds=enqueue_timeout_seconds,
+            retries=enqueue_retries,
+        )
+        print(f"Batch {batch_index}/{total_batches} response: {response.text}")
 
 
 def require_env(name: str) -> str:
@@ -79,6 +96,47 @@ def require_env(name: str) -> str:
     if not value:
         raise RuntimeError(f"Missing required environment variable: {name}")
     return value
+
+
+def get_int_env(name: str, default: int) -> int:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    try:
+        parsed = int(raw)
+    except ValueError:
+        return default
+    return parsed if parsed > 0 else default
+
+
+def post_with_retries(
+    ingest_url: str,
+    headers: dict[str, str],
+    payload: dict[str, object],
+    timeout_seconds: int,
+    retries: int,
+) -> requests.Response:
+    attempt = 0
+    while True:
+        attempt += 1
+        try:
+            response = requests.post(
+                ingest_url,
+                headers=headers,
+                data=json.dumps(payload),
+                timeout=timeout_seconds,
+            )
+            response.raise_for_status()
+            return response
+        except requests.exceptions.RequestException as exc:
+            if attempt >= retries:
+                raise
+            sleep_seconds = min(30, 2**attempt)
+            print(
+                f"Batch enqueue attempt {attempt}/{retries} failed: {exc}. "
+                f"Retrying in {sleep_seconds}s..."
+            )
+            time.sleep(sleep_seconds)
 
 
 def get_public_base_url() -> str:

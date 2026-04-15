@@ -109,6 +109,13 @@ wrangler deploy
 The workflow already listens for pushes under `assets/**`.
 
 When you commit new files there, GitHub Actions will run `scripts/enqueue_posts.py` and POST the payload to the Worker.
+The enqueue script sends jobs in batches by default to avoid request timeouts on large uploads.
+
+Optional GitHub Action env overrides:
+
+- `ENQUEUE_BATCH_SIZE` (default `25`)
+- `ENQUEUE_TIMEOUT_SECONDS` (default `180`)
+- `ENQUEUE_RETRIES` (default `3`)
 
 ## Notes on scheduling
 
