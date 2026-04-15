@@ -73,9 +73,11 @@ Configure these for the Worker:
 
 ### Vars
 - `IG_USER_ID`
+- `IG_GRAPH_API_BASE_URL` — default `https://graph.instagram.com`
 - `PUBLIC_BASE_URL` — `https://nkhirt.com`
 - `MIN_GAP_MINUTES` — e.g. `60`
 - `MAX_JITTER_MINUTES` — e.g. `20`
+- `FIRST_POST_LEAD_MINUTES` — e.g. `1` for fast first-post testing
 - `QUIET_HOURS_START` — e.g. `23` (local posting blackout start hour)
 - `QUIET_HOURS_END` — e.g. `7` (local posting blackout end hour)
 - `POST_TIMEZONE` — e.g. `America/New_York`
@@ -128,6 +130,7 @@ It is built for reliability and rate control, not for trying to disguise automat
 - If your images are not reachable on `<PUBLIC_BASE_URL>/assets/...`, Meta will not be able to fetch them.
 - Deleted files in the git diff are skipped during enqueue (only files present in the current checkout are enqueued).
 - HEIC/HEIF files are accepted for timestamp extraction, but publishing uses a same-stem companion `.jpg`/`.jpeg`/`.png`/`.webp` URL under `assets/`.
+- Ensure `IG_USER_ID` matches the token source (`graph.instagram.com/me` if using Instagram Graph tokens).
 - The exact Meta publishing cap should be verified against the current docs and your app setup; the Worker checks `content_publishing_limit` before publishing.
 
 ## HEIC helper
