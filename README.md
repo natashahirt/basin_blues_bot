@@ -110,6 +110,7 @@ The workflow already listens for pushes under `assets/**`.
 
 When you commit new files there, GitHub Actions will run `scripts/enqueue_posts.py` and POST the payload to the Worker.
 The enqueue script sends jobs in batches by default to avoid request timeouts on large uploads.
+For manual runs (`workflow_dispatch`), set `enqueue_all_assets=true` to enqueue every supported file currently under `assets/`.
 
 Optional GitHub Action env overrides:
 

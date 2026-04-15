@@ -48,8 +48,13 @@ def main() -> None:
     sha = require_env("GITHUB_SHA")
     event_path = require_env("GITHUB_EVENT_PATH")
 
-    changed_files = get_changed_files(event_path)
-    image_paths = [Path(p) for p in changed_files if is_supported_asset(Path(p))]
+    enqueue_all_assets = is_truthy_env("ENQUEUE_ALL_ASSETS")
+    if enqueue_all_assets:
+        image_paths = list_all_supported_assets(ASSETS_DIR)
+        print(f"ENQUEUE_ALL_ASSETS enabled: scanning {ASSETS_DIR}/ for all supported files.")
+    else:
+        changed_files = get_changed_files(event_path)
+        image_paths = [Path(p) for p in changed_files if is_supported_asset(Path(p))]
     existing_image_paths = [path for path in image_paths if path.exists()]
     missing_image_paths = [path for path in image_paths if not path.exists()]
 
@@ -107,6 +112,17 @@ def get_int_env(name: str, default: int) -> int:
     except ValueError:
         return default
     return parsed if parsed > 0 else default
+
+
+def is_truthy_env(name: str) -> bool:
+    value = os.getenv(name, "").strip().lower()
+    return value in {"1", "true", "yes", "on"}
+
+
+def list_all_supported_assets(assets_dir: Path) -> list[Path]:
+    if not assets_dir.exists():
+        return []
+    return sorted(path for path in assets_dir.rglob("*") if path.is_file() and is_supported_asset(path))
 
 
 def post_with_retries(

@@ -8,6 +8,11 @@ on:
     paths:
       - "assets/**"
   workflow_dispatch:
+    inputs:
+      enqueue_all_assets:
+        description: "When true, enqueue all supported files under assets/."
+        required: false
+        default: "false"
 
 jobs:
   enqueue:
@@ -34,4 +39,5 @@ jobs:
           CF_INGEST_URL: ${{ secrets.CF_INGEST_URL }}
           CF_INGEST_TOKEN: ${{ secrets.CF_INGEST_TOKEN }}
           PUBLIC_BASE_URL: ${{ vars.PUBLIC_BASE_URL }}
+          ENQUEUE_ALL_ASSETS: ${{ inputs.enqueue_all_assets }}
         run: python scripts/enqueue_posts.py
